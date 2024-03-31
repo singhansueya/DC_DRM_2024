@@ -1,0 +1,286 @@
+---
+title: "ABCD"
+format: html
+editor: visual
+---
+
+## --
+title: "QuantitativeRisk Management in R"
+subtitle : "DataCamp"
+date : "31-03-2024"
+format: html
+---
+
+## Setup
+
+```{r,,message=FALSE, warning=FALSE}
+library(xts)
+library(zoo)
+library(qrmdata)
+library(qrmtools)
+library(tidyverse)
+library(quantmod)
+library(PerformanceAnalytics)
+```
+
+## Exploring Market Risk-Factor Data
+
+### video 1
+
+Hello. My name is Alex McNeil, and I am going to take your through "An Introduction to Quantitative Risk Management".
+
+My background is in mathematical statistics, actuarial science, and quantitative finance. Together with my colleagues Ruediger Frey and Paul Embrechts, I am the author of the book "Quantitative Risk Management: Concepts, Techniques, and Tools", published by Princeton University Press. If you want the theoretical background to this course, I recommend you take a look. Together with my co-authors and with Marius Hofert, I have also created the website qrmtutorial(dot)org which provides complementary materials to the QRM book. In particular, there is a lot of R code there, which you might want to try after you've taken this course. Marius and I have two R packages which feature prominently in qrmtutorial. These are qrmdata, which is a large collection of financial datasets for students and researchers in QRM, and qrmtools, which is a set of useful functions. You'll use these packages in the course.
+
+In QRM, the goal is to quantify the risk of a portfolio of risky assets. Measuring the risk is the first step towards managing the risk. In the book I wrote, we consider the typical portfolios of risky assets held by banks and insurance companies, and sometimes also their liabilities. But the ideas apply equally to the portfolio of a private investor, like you or me. Managing the risk can entail many things. For example, you might try to reduce the risk by selling assets, by acquiring new assets to increase the diversification of the portfolio, or by using so-called hedging strategies. For the banks and insurers, an important part of managing risk is making sure they have sufficient capital to withstand large losses on their portfolios and remain solvent. For this purpose, they compute measurements of the amounts that they could lose in periods of extreme market stress. A well-known example of one of these risk measures is Value-at-Risk. In this course, you will work up to calculating Value-at-Risk for portfolios. To begin with, it is important to consider where the risk in a portfolio comes from.
+
+So think of a portfolio of risky assets. It might contain some stock index trackers, some individual stocks, some government bonds or treasuries, some corporate bonds. It might contain assets denominated in domestic currency and some denominated in foreign currencies. It might contain commodities, like gold. It might contain some derivative securities designed to hedge risk or speculate on price movements, such as equity options. The value of this portfolio at any point in time depends on the fluctuating values of many underlying quantities, which we call risk factors. Examples of risk factors are equity indexes, individual equity prices, foreign exchange rates, interest rates for different borrowing periods (in the case of bonds), and commodity prices. Let's load the `qrmdata` package and then the dataset `sp500`0. This contains daily values of the well-known equity index based on 500 of the most important US stocks.
+
+Using `head` and `tail`, the first few lines, and the last few lines of the data can be displayed. Note the dates of the first few values in 1950 and the last few values up to the end of 2015.
+
+```{r}
+data("SP500")
+head(SP500)
+```
+
+```{r}
+tail((SP500))
+```
+
+Let's plot the index. You can see how it has generally gone up over time, but with some drawdowns such as around the 2008-2009 financial crisis.
+
+```{r}
+plot(SP500)
+```
+
+### Exploring risk-factor time series: equity indexes
+
+In this exercise, you will look at an equity index and plot it for a particular range of dates. The data used in this exercise and in the rest of the course are contained in the package qrmdata. You also need the package xts to manipulate time series.
+
+When the qrmdata library is attached, as it will be throughout the course, you can load a dataset with the data() command. For example, the command data("FTSE") loads the UK FTSE (Financial Times Stock Exchange) index, which you can then refer to as object FTSE.
+
+If you want to extract the data from a certain date range, for example from April 1 to June 30, 2000, you can create a new object using the command ftse00 \<- FTSE\["2000-04-01/2000-06-30"\].
+
+From now onwards, the xts package will also already be loaded into your workspace.
+
+This course touches on a lot of concepts you may have forgotten, so if you ever need a quick refresher, download the xts in R Cheat Sheet and keep it handy!
+
+
+Load the Dow Jones index "DJ" from qrmdata.
+Show the first and last few lines of the DJ index with head() and tail().
+Plot the DJ index using plot().
+Extract the DJ index for the crisis period 2008-2009 and assign to object dj0809.
+Plot the dj0809 using the same plotting function as above.
+
+
+
+```{r}
+# Load DJ index
+data(DJ)
+```
+
+```{r}
+# Show head() and tail() of DJ index
+head(DJ)
+tail((DJ))
+```
+
+```{r}
+# Plot DJ index
+plot(DJ)
+```
+
+```{r}
+# Extract 2008-2009 and assign to dj0809
+dj0809 <- DJ["2008/2009"]
+```
+
+```{r}
+# Plot dj0809
+plot(dj0809)
+```
+
+# Load DJ constituents data
+
+```{r}
+data("DJ_const")
+```
+
+
+# Apply names() and head() to DJ_const
+```{r}
+names(DJ_const)
+head(DJ_const)
+```
+
+
+
+# Extract AAPL and GS in 2008-09 and assign to stocks
+```{r}
+stocks <- DJ_const["2008/2009", c("AAPL", "GS")]
+```
+
+
+
+# Plot stocks with plot.zoo()
+
+```{r}
+plot.zoo(stocks)
+```
+
+
+# Load exchange rate data
+```{r}
+data("GBP_USD")
+data("EUR_USD")
+```
+
+
+
+# Plot the two exchange rates
+```{r}
+plot(GBP_USD, main = "GBP to USD Exchange Rate")
+plot(EUR_USD, main = "EUR to USD Exchange Rate")
+```
+
+
+
+# Plot a USD_GBP exchange rate
+```{r}
+plot(1/GBP_USD, main = "USD to GBP Exchange Rate")
+```
+
+
+
+# Merge the two exchange rates GBP_USD and EUR_USD
+```{r}
+fx <- merge(GBP_USD, EUR_USD, all = TRUE)
+```
+
+
+
+# Extract 2010-15 data from fx and assign to fx0015
+```{r}
+fx0015 <- fx["2010/2015"]
+```
+
+
+
+# Plot the exchange rates in fx0015
+```{r}
+plot.zoo(fx0015, main = "Exchange Rates 2010-2015")
+```
+
+## VIDEO 2
+
+1. Risk-factor returns
+00:00 - 00:09
+In QRM, the aim is to model the fluctuations in key risk factors which affect the value of a portfolio.
+
+2. Risk-factor returns
+00:09 - 01:49
+These fluctuations are called the risk-factor changes or risk-factor returns or simply returns. However, there are a few different ways of defining returns. Let (Z_t) be a time series containing the values of a risk factor at a time at a set of regularly-spaced times, which could represent days, weeks, months, etc. For illustration, let's suppose it is a daily series. Here are three different ways of defining risk-factor returns (X_t): In the first definition, the returns are the differences of the risk-factor values, known as simple returns. This is the simplest definition but not the most common. It tends to be used when the risk factors have very small values close to zero (like certain interest-rate series). The second definition is the easiest to interpret. The relative returns are the differences divided by the initial values. If you multiply the relative returns by one hundred, you get percentage changes. So if a stock has a relative return of point zero two, it gains 2% in value; if it has a relative return of minus point zero three, it falls 3% in value. In the third definition, the returns are the differences of the log-values of the risk factors; these are log-returns. This definition is, in fact, the most widely used. Here are a few of the reasons why log-returns are popular.
+
+3. Properties of log-returns
+01:49 - 03:19
+If you build a model for the log-returns of a risk factor, you know that the risk-factor can never become negative. This is generally a desirable feature for risk factors that are prices and rates. However, some risk factors can become negative under unusual market conditions, an example being short-term interest rates. Log returns are, in fact, very close to relative returns for typical values. It can be shown with some algebra that log of Z_t minus log of Z_(t-1) can be approximated by Z_t minus Z_(t-1) divided by Z_(t-1) Finally, there are a couple of theoretical reasons for using log-returns: It is particularly easy to aggregate them to calculate longer-interval returns, such as weekly or monthly returns, as we will see later in this chapter. Also, there is a very famous model for prices known as the Black-Scholes-Merton model, or geometric Brownian motion (GBM). The model is widely used for pricing derivatives. If a price series follows GBM, then the log-returns will be normally distributed. That's all you really need to know about this model at this stage.
+
+4. Log-returns in R
+03:19 - 03:56
+It's worth remarking, however, that you are going to find that log-returns generally aren't normally distributed in practice, at least for short time horizons. To calculate the log-returns of the S&P 500 index, you apply the functions log and diff in succession. Diff calculates differences. Here is some code to illustrate. Note that you get an NA in the first position when you apply these operations. It is best to remove the first value prior to working with the return series.
+
+5. Log-returns in R (2)
+03:56 - 04:26
+Now let's plot the log-returns. You see, a fairly noisy series mostly oscillating between minus point zero five and plus point zero five, which can be approximately interpreted as 5% movements up and down. However, there are some very extreme values. The largest negative return corresponds to the famous stock market crash on Black Monday in 1987.
+
+6. Let's practice!
+04:26 - 04:34
+Now it's your turn to calculate and plot some returns in the next exercises.
+
+
+```{r}
+# Compute the log-returns of dj0809 and assign to dj0809_x
+dj0809_x <- diff(log(dj0809))
+
+# Plot the log-returns
+plot(dj0809_x)
+
+# Compute the log-returns of djstocks and assign to djstocks_x
+djstocks <- DJ_const["2008/2009", c("AAPL", "GS")]
+djstocks_x <- diff(log(djstocks))
+
+# Plot the two share returns
+plot.zoo(djstocks_x)
+
+# Compute the log-returns of GBP_USD and assign to erate_x
+erate_x <- diff(log(GBP_USD))
+
+# Plot the log-returns
+plot(erate_x)
+```
+
+
+
+```{r}
+# Plot djstocks in four separate plots
+plot.zoo(djstocks)
+
+# Plot djstocks in one plot and add legend
+plot.zoo(djstocks, plot.type = "single", col = 1:4)
+legend(julian(x = as.Date("2009-01-01")), y = 70, legend = names(DJ_const)[1:4], fill = 1:4)
+
+# Compute log-returns and assign to djstocks_x
+djstocks_x <- diff(log(djstocks))
+
+# Plot djstocks_x in four separate plots
+plot.zoo(djstocks_x)
+
+# Plot djstocks_x with vertical bars
+plot.zoo(djstocks_x, type = "h")
+
+```
+
+## video 3
+
+
+
+1. Aggregating log-returns
+00:00 - 00:04
+2. Aggregating log-returns
+00:04 - 01:23
+I remarked before that it is easy to aggregate shorter interval log-returns like daily returns to obtain longer-interval returns like weekly or monthly returns. Effectively you just add them up! Why would you want to do this? Well, by aggregating returns, you can study the risks over longer time horizons, such as a month, a quarter, or a year. There is some simple mathematics behind the aggregation of log-returns. Let's assume that the series (X_t) are daily log-returns calculated from daily risk-factor values (Z_t). Let's assume further that (Z_t) is a price series for some asset that is traded on weekdays. To get the log-return for a whole trading week starting on day t (effectively the previous Friday evening price before markets open on the Monday morning) and ending on day t+5 (Friday evening again), you would calculate the difference log(Z_{t+5}) - log(Z_t). It can be shown that this is just the sum of the log-returns for each of the trading days. And a similar calculation works for any aggregation period.
+
+3. Aggregating log-returns in R
+01:23 - 02:21
+To do this in R, you can use a set of functions in the xts package with names like apply weekly and apply monthly. If the object sp500x is an xts object contains daily log-returns, you obtain weekly returns by applying the sum function within the apply weekly function. Note how the returns now have date stamps that are seven days apart. Similarly, to get monthly returns, you apply the sum function within the apply monthly function. Now the date stamps are the last days of each calendar month. Note that if you have a multivariate time series containing, for example, multiple stock prices, you have to apply the function colSums() instead of sum(). Look out for an example of that at the end of the next exercise.
+
+4. Let's practice!
+02:21 - 02:28
+So now it is time to practice aggregating log-return series.
+
+
+```{r}
+# Plot djx
+djx <- DJ_const["2008/2009", c("AAPL", "GS")]
+djreturns <- DJ_const["2008/2009", c("AAPL", "GS")]
+plot(djx)
+
+# Plot weekly log-returns of djx
+plot(apply.weekly(djx, sum), type = "h")
+
+# Plot monthly log-returns of djx
+plot(apply.monthly(djx, sum), type = "h")
+
+# Plot djreturns
+plot.zoo(djreturns)
+
+# Plot monthly log-returns of djreturns
+plot.zoo(apply.monthly(djreturns, colSums), type = "h")
+
+```
+
+
+
+
+
+
+
